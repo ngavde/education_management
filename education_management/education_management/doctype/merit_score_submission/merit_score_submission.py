@@ -1,0 +1,160 @@
+import frappe
+from frappe.model.document import Document
+from frappe.utils import flt, nowdate, now
+
+
+class MeritScoreSubmission(Document):
+    def validate(self):
+        self.calculate_percentage()
+        self.validate_scores()
+        self.calculate_grade()
+
+    def on_submit(self):
+        self.submission_status = "Submitted"
+        self.save()
+
+    def on_cancel(self):
+        self.submission_status = "Draft"
+        self.save()
+
+    def calculate_percentage(self):
+        if self.total_merit_score and self.maximum_possible_score:
+            self.percentage_score = flt(self.total_merit_score / self.maximum_possible_score * 100, 2)
+
+    def validate_scores(self):
+        if self.total_merit_score and self.maximum_possible_score:
+            if self.total_merit_score > self.maximum_possible_score:
+                frappe.throw("Total Merit Score cannot be greater than Maximum Possible Score")
+
+            if self.total_merit_score < 0:
+                frappe.throw("Total Merit Score cannot be negative")
+
+        # Validate subject scores sum
+        if self.subject_scores:
+            subject_total = sum([flt(row.score) for row in self.subject_scores])
+            if abs(subject_total - flt(self.total_merit_score)) > 0.01:
+                frappe.throw(f"Sum of subject scores ({subject_total}) does not match total merit score ({self.total_merit_score})")
+
+    def calculate_grade(self):
+        if self.percentage_score:
+            percentage = flt(self.percentage_score)
+            if percentage >= 95:
+                self.merit_grade = "A+"
+            elif percentage >= 90:
+                self.merit_grade = "A"
+            elif percentage >= 85:
+                self.merit_grade = "B+"
+            elif percentage >= 80:
+                self.merit_grade = "B"
+            elif percentage >= 75:
+                self.merit_grade = "C+"
+            elif percentage >= 70:
+                self.merit_grade = "C"
+            elif percentage >= 60:
+                self.merit_grade = "D"
+            else:
+                self.merit_grade = "F"
+
+    def validate_documents(self):
+        """Method to validate supporting documents"""
+        if self.supporting_documents and self.document_verification_status == "Pending":
+            self.document_verification_status = "Under Review"
+
+    def approve_validation(self, validator=None):
+        """Method to approve merit score validation"""
+        self.validation_status = "Validated"
+        self.validated_by = validator or frappe.session.user
+        self.validation_date = now()
+        self.document_verification_status = "Verified"
+        self.submission_status = "Approved"
+        self.save()
+
+    def reject_validation(self, reason=None):
+        """Method to reject merit score validation"""
+        self.validation_status = "Rejected"
+        self.submission_status = "Rejected"
+        if reason:
+            self.admin_remarks = reason
+        self.save()
+
+
+@frappe.whitelist()
+def get_merit_ranking(program=None, academic_year=None, student_category=None):
+    """Generate merit ranking based on filters"""
+    filters = {
+        "docstatus": 1,
+        "validation_status": "Validated",
+        "submission_status": "Approved"
+    }
+
+    if program:
+        filters["program"] = program
+    if academic_year:
+        filters["academic_year"] = academic_year
+    if student_category:
+        filters["student_category"] = student_category
+
+    submissions = frappe.get_all(
+        "Merit Score Submission",
+        filters=filters,
+        fields=[
+            "name", "student_applicant", "applicant_name", "total_merit_score",
+            "percentage_score", "program", "student_category"
+        ],
+        order_by="total_merit_score desc, percentage_score desc"
+    )
+
+    # Calculate ranks
+    overall_rank = 1
+    category_ranks = {}
+
+    for submission in submissions:
+        # Overall merit rank
+        frappe.db.set_value("Merit Score Submission", submission.name, "merit_rank", overall_rank)
+        overall_rank += 1
+
+        # Category-wise rank
+        category = submission.student_category or "General"
+        if category not in category_ranks:
+            category_ranks[category] = 1
+
+        frappe.db.set_value("Merit Score Submission", submission.name, "category_rank", category_ranks[category])
+        category_ranks[category] += 1
+
+    frappe.db.commit()
+    return submissions
+
+
+@frappe.whitelist()
+def validate_merit_submission(submission_name, action, comments=None):
+    """Validate or reject merit submission"""
+    doc = frappe.get_doc("Merit Score Submission", submission_name)
+
+    if action == "approve":
+        doc.approve_validation()
+        frappe.msgprint("Merit submission validated successfully")
+    elif action == "reject":
+        doc.reject_validation(comments)
+        frappe.msgprint("Merit submission rejected")
+
+    return doc
+
+
+def on_submit_merit_score(doc, method):
+    """Handle merit score submission events"""
+    from education_management.utils import send_merit_notification
+
+    # Send notification
+    send_merit_notification(doc, "submission")
+
+
+def on_cancel_merit_score(doc, method):
+    """Handle merit score cancellation"""
+    # Reset any linked validation records
+    validations = frappe.get_all("Merit Score Validation", {
+        "merit_submission": doc.name,
+        "docstatus": 0
+    })
+
+    for validation in validations:
+        frappe.delete_doc("Merit Score Validation", validation.name)

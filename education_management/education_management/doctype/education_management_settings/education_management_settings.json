@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "creation": "2025-01-27 21:50:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_1",
+  "enable_merit_list_process",
+  "merit_list_mandatory",
+  "column_break_2",
+  "default_minimum_merit_score",
+  "allow_score_modification_after_validation",
+  "section_break_3",
+  "merit_validation_required",
+  "auto_approve_if_documents_verified",
+  "column_break_4",
+  "document_upload_mandatory",
+  "max_file_size_mb",
+  "section_break_5",
+  "grade_calculation_method",
+  "tie_breaking_criteria",
+  "column_break_6",
+  "enable_category_wise_ranking",
+  "enable_program_wise_ranking",
+  "section_break_7",
+  "notification_settings",
+  "notify_on_submission",
+  "notify_on_validation",
+  "column_break_8",
+  "validation_reminder_days",
+  "auto_generate_rankings"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Merit List Configuration"
+  },
+  {
+   "default": "1",
+   "description": "Enable merit list functionality in the system",
+   "fieldname": "enable_merit_list_process",
+   "fieldtype": "Check",
+   "label": "Enable Merit List Process"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_merit_list_process",
+   "description": "Make merit list submission mandatory for admission",
+   "fieldname": "merit_list_mandatory",
+   "fieldtype": "Check",
+   "label": "Merit List Mandatory for Admission"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "enable_merit_list_process",
+   "description": "Default minimum merit score required for consideration",
+   "fieldname": "default_minimum_merit_score",
+   "fieldtype": "Float",
+   "label": "Default Minimum Merit Score",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "depends_on": "enable_merit_list_process",
+   "description": "Allow modification of scores after validation is complete",
+   "fieldname": "allow_score_modification_after_validation",
+   "fieldtype": "Check",
+   "label": "Allow Score Modification After Validation"
+  },
+  {
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Validation Settings"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_merit_list_process",
+   "description": "Require teacher/admin validation of merit scores",
+   "fieldname": "merit_validation_required",
+   "fieldtype": "Check",
+   "label": "Merit Validation Required"
+  },
+  {
+   "default": "0",
+   "depends_on": "merit_validation_required",
+   "description": "Automatically approve if all documents are verified",
+   "fieldname": "auto_approve_if_documents_verified",
+   "fieldtype": "Check",
+   "label": "Auto Approve if Documents Verified"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_merit_list_process",
+   "description": "Make document upload mandatory for merit submission",
+   "fieldname": "document_upload_mandatory",
+   "fieldtype": "Check",
+   "label": "Document Upload Mandatory"
+  },
+  {
+   "default": "10",
+   "depends_on": "document_upload_mandatory",
+   "description": "Maximum file size in MB for document uploads",
+   "fieldname": "max_file_size_mb",
+   "fieldtype": "Int",
+   "label": "Max File Size (MB)"
+  },
+  {
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Ranking Settings"
+  },
+  {
+   "default": "Percentage Based",
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "grade_calculation_method",
+   "fieldtype": "Select",
+   "label": "Grade Calculation Method",
+   "options": "Percentage Based\nAbsolute Score Based\nCustom"
+  },
+  {
+   "default": "Total Score",
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "tie_breaking_criteria",
+   "fieldtype": "Select",
+   "label": "Tie Breaking Criteria",
+   "options": "Total Score\nPercentage\nSubmission Date\nManual Review"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_merit_list_process",
+   "description": "Enable separate ranking for each student category",
+   "fieldname": "enable_category_wise_ranking",
+   "fieldtype": "Check",
+   "label": "Enable Category-wise Ranking"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_merit_list_process",
+   "description": "Enable separate ranking for each program",
+   "fieldname": "enable_program_wise_ranking",
+   "fieldtype": "Check",
+   "label": "Enable Program-wise Ranking"
+  },
+  {
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break",
+   "label": "Notification Settings"
+  },
+  {
+   "default": "Email",
+   "depends_on": "enable_merit_list_process",
+   "fieldname": "notification_settings",
+   "fieldtype": "Select",
+   "label": "Notification Method",
+   "options": "\nEmail\nSMS\nBoth\nNone"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.notification_settings && doc.notification_settings != 'None'",
+   "description": "Send notification when merit score is submitted",
+   "fieldname": "notify_on_submission",
+   "fieldtype": "Check",
+   "label": "Notify on Submission"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.notification_settings && doc.notification_settings != 'None'",
+   "description": "Send notification when merit score is validated",
+   "fieldname": "notify_on_validation",
+   "fieldtype": "Check",
+   "label": "Notify on Validation"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "3",
+   "depends_on": "merit_validation_required",
+   "description": "Send reminder after specified days for pending validations",
+   "fieldname": "validation_reminder_days",
+   "fieldtype": "Int",
+   "label": "Validation Reminder (Days)"
+  },
+  {
+   "default": "1",
+   "depends_on": "enable_merit_list_process",
+   "description": "Automatically generate rankings when scores are validated",
+   "fieldname": "auto_generate_rankings",
+   "fieldtype": "Check",
+   "label": "Auto Generate Rankings"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-01-27 21:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "Education Management",
+ "name": "Education Management Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

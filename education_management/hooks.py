@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["education"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -137,13 +137,15 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Merit Score Submission": {
+		"on_submit": "education_management.education_management.doctype.merit_score_submission.merit_score_submission.on_submit_merit_score",
+		"on_cancel": "education_management.education_management.doctype.merit_score_submission.merit_score_submission.on_cancel_merit_score"
+	},
+	"Student Applicant": {
+		"on_update": "education_management.utils.check_merit_list_requirement"
+	}
+}
 
 # Scheduled Tasks
 # ---------------

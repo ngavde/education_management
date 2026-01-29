@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "creation": "2025-01-27 21:45:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_1",
+  "academic_year",
+  "program",
+  "student_category",
+  "column_break_2",
+  "include_pending",
+  "minimum_score",
+  "maximum_results",
+  "section_break_3",
+  "generate_list",
+  "refresh_ranking",
+  "column_break_4",
+  "export_pdf",
+  "export_excel",
+  "section_break_5",
+  "merit_list_results",
+  "section_break_6",
+  "generation_summary"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Filter Criteria"
+  },
+  {
+   "fieldname": "academic_year",
+   "fieldtype": "Link",
+   "label": "Academic Year",
+   "options": "Academic Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Program"
+  },
+  {
+   "fieldname": "student_category",
+   "fieldtype": "Link",
+   "label": "Student Category",
+   "options": "Student Category"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Include submissions that are pending validation",
+   "fieldname": "include_pending",
+   "fieldtype": "Check",
+   "label": "Include Pending Validations"
+  },
+  {
+   "description": "Minimum merit score to include in the list",
+   "fieldname": "minimum_score",
+   "fieldtype": "Float",
+   "label": "Minimum Score",
+   "precision": "2"
+  },
+  {
+   "description": "Maximum number of results to show (0 = no limit)",
+   "fieldname": "maximum_results",
+   "fieldtype": "Int",
+   "label": "Maximum Results"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Actions"
+  },
+  {
+   "fieldname": "generate_list",
+   "fieldtype": "Button",
+   "label": "Generate Merit List"
+  },
+  {
+   "fieldname": "refresh_ranking",
+   "fieldtype": "Button",
+   "label": "Refresh Rankings"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "export_pdf",
+   "fieldtype": "Button",
+   "label": "Export as PDF"
+  },
+  {
+   "fieldname": "export_excel",
+   "fieldtype": "Button",
+   "label": "Export as Excel"
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break",
+   "label": "Merit List Results"
+  },
+  {
+   "fieldname": "merit_list_results",
+   "fieldtype": "HTML",
+   "label": "Merit List Results"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "generation_summary",
+   "fieldtype": "Text",
+   "label": "Generation Summary",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-01-27 21:45:00.000000",
+ "modified_by": "Administrator",
+ "module": "Education Management",
+ "name": "Merit List Generation Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Academics User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
