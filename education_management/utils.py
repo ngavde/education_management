@@ -7,17 +7,32 @@ def check_merit_list_requirement(doc, method):
     settings = get_education_management_settings()
 
     if settings.get("enable_merit_list_process") and settings.get("merit_list_mandatory"):
-        # Check if merit submission exists for this applicant
-        merit_submission = frappe.db.exists("Merit Score Submission", {
-            "student_applicant": doc.name,
-            "docstatus": 1
-        })
+        # Check merit submission requirements based on validation settings
+        if settings.get("merit_validation_required"):
+            # Check if validated merit submission exists for this applicant
+            merit_submission = frappe.db.exists("Merit Score Submission", {
+                "student_applicant": doc.name,
+                "docstatus": 1,
+                "validation_status": "Validated"
+            })
 
-        if not merit_submission and doc.application_status in ["Approved", "Admitted"]:
-            frappe.msgprint(
-                f"Merit list submission is required before approving/admitting {doc.title}",
-                alert=True
-            )
+            if not merit_submission and doc.application_status in ["Approved", "Admitted"]:
+                frappe.throw(
+                    f"Merit score submission must be validated before approving/admitting {doc.title}",
+                    frappe.ValidationError
+                )
+        else:
+            # Just check if merit submission exists (no validation required)
+            merit_submission = frappe.db.exists("Merit Score Submission", {
+                "student_applicant": doc.name,
+                "docstatus": 1
+            })
+
+            if not merit_submission and doc.application_status in ["Approved", "Admitted"]:
+                frappe.throw(
+                    f"Merit score submission is required before approving/admitting {doc.title}",
+                    frappe.ValidationError
+                )
 
 
 def get_education_management_settings():
