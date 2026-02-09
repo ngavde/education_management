@@ -13,6 +13,19 @@ frappe.ui.form.on('Merit Score Submission', {
             }, __('Actions'));
         }
 
+        // Add document verification buttons if submitted and documents are pending
+        if (frm.doc.docstatus === 1 && frm.doc.document_verification_status === 'Pending') {
+            // Add Verify Documents button
+            frm.add_custom_button(__('Verify Documents'), function() {
+                update_document_verification(frm, 'Verified');
+            }, __('Documents'));
+
+            // Add Reject Documents button
+            frm.add_custom_button(__('Reject Documents'), function() {
+                update_document_verification(frm, 'Rejected');
+            }, __('Documents'));
+        }
+
         // Show validation info if already validated
         if (frm.doc.validation_status === 'Validated') {
             frm.dashboard.add_comment(__('Validated by {0} on {1}', [
@@ -82,6 +95,30 @@ function submit_validation(frm, action, comments) {
             }
         }
     });
+}
+
+function update_document_verification(frm, status) {
+    frappe.confirm(
+        __('Are you sure you want to {0} the documents?', [status.toLowerCase()]),
+        function() {
+            frappe.call({
+                method: 'education_management.education_management.doctype.merit_score_submission.merit_score_submission.update_document_verification',
+                args: {
+                    submission_name: frm.doc.name,
+                    status: status
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.reload_doc();
+                        frappe.show_alert({
+                            message: __('Document verification updated to {0}', [status]),
+                            indicator: status === 'Verified' ? 'green' : 'red'
+                        });
+                    }
+                }
+            });
+        }
+    );
 }
 
 function check_modification_permission(frm) {

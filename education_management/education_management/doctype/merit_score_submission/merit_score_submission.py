@@ -19,9 +19,9 @@ class MeritScoreSubmission(Document):
             # Prevent Document Verification Status changes after submission
             if (self.docstatus == 1 and
                 self.document_verification_status != original_doc.document_verification_status and
-                not frappe.has_permission("Merit Score Submission", "write")):
+                not getattr(self.flags, 'updating_verification', False)):
                 frappe.throw(
-                    "Document Verification Status cannot be changed after submission. Only authorized users can update verification status.",
+                    "Document Verification Status cannot be changed after submission.",
                     frappe.ValidationError
                 )
 
@@ -170,6 +170,22 @@ def validate_merit_submission(submission_name, action, comments=None):
         doc.reject_validation(comments)
         frappe.msgprint("Merit submission rejected")
 
+    return doc
+
+
+@frappe.whitelist()
+def update_document_verification(submission_name, status):
+    """Update document verification status"""
+    doc = frappe.get_doc("Merit Score Submission", submission_name)
+
+    # Temporarily bypass the validation for this specific update
+    doc.flags.ignore_permissions = True
+    doc.flags.updating_verification = True
+
+    doc.document_verification_status = status
+    doc.save()
+
+    frappe.msgprint(f"Document verification status updated to {status}")
     return doc
 
 
