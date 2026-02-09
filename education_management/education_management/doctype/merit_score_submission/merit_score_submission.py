@@ -5,9 +5,32 @@ from frappe.utils import flt, nowdate, now
 
 class MeritScoreSubmission(Document):
     def validate(self):
+        self.check_validation_update_permission()
         self.calculate_percentage()
         self.validate_scores()
         self.calculate_grade()
+
+    def check_validation_update_permission(self):
+        """Prevent updates after validation unless allowed in settings"""
+        if self.validation_status == "Validated" and not self.is_new():
+            # Check if modification is allowed after validation
+            from education_management.utils import get_education_management_settings
+            settings = get_education_management_settings()
+
+            if not settings.get("allow_score_modification_after_validation"):
+                # Allow only certain fields to be updated
+                allowed_fields = ['admin_remarks', 'teacher_comments', 'validation_status', 'validated_by', 'validation_date']
+
+                # Get the original document to compare changes
+                original_doc = frappe.get_doc("Merit Score Submission", self.name)
+
+                for field in self.meta.get_fieldnames():
+                    if field not in allowed_fields and self.get(field) != original_doc.get(field):
+                        frappe.throw(
+                            f"Cannot modify '{self.meta.get_field(field).label}' after validation. "
+                            "Enable 'Allow Score Modification After Validation' in Education Management Settings to allow changes.",
+                            frappe.ValidationError
+                        )
 
     def on_submit(self):
         self.submission_status = "Submitted"
