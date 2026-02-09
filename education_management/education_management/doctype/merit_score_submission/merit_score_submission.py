@@ -19,11 +19,16 @@ class MeritScoreSubmission(Document):
             # Prevent Document Verification Status changes after submission
             if (self.docstatus == 1 and
                 self.document_verification_status != original_doc.document_verification_status and
-                not getattr(self.flags, 'updating_verification', False)):
-                frappe.throw(
-                    "Document Verification Status cannot be changed after submission.",
-                    frappe.ValidationError
-                )
+                not getattr(self.flags, 'updating_verification', False) and
+                not frappe.session.user == "Administrator"):
+
+                # Check if user has specific role permissions
+                if not (frappe.has_permission("Merit Score Submission", "write") and
+                       (frappe.get_roles() and any(role in ["Academics Manager", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                    frappe.throw(
+                        "Document Verification Status cannot be changed after submission. Only authorized users can update verification status.",
+                        frappe.ValidationError
+                    )
 
             # Prevent updates after validation unless allowed in settings
             if self.validation_status == "Validated":
@@ -176,14 +181,20 @@ def validate_merit_submission(submission_name, action, comments=None):
 @frappe.whitelist()
 def update_document_verification(submission_name, status):
     """Update document verification status"""
+    # Check permissions first
+    if not frappe.has_permission("Merit Score Submission", "write"):
+        frappe.throw("Insufficient permissions to update document verification status")
+
+    # Update the status directly in database to bypass document validation
+    frappe.db.set_value("Merit Score Submission", submission_name, {
+        "document_verification_status": status,
+        "modified": frappe.utils.now(),
+        "modified_by": frappe.session.user
+    })
+    frappe.db.commit()
+
+    # Get updated document
     doc = frappe.get_doc("Merit Score Submission", submission_name)
-
-    # Temporarily bypass the validation for this specific update
-    doc.flags.ignore_permissions = True
-    doc.flags.updating_verification = True
-
-    doc.document_verification_status = status
-    doc.save()
 
     frappe.msgprint(f"Document verification status updated to {status}")
     return doc
