@@ -30,6 +30,20 @@ class MeritScoreSubmission(Document):
                         frappe.ValidationError
                     )
 
+            # Prevent Validation Status changes after submission
+            if (self.docstatus == 1 and
+                self.validation_status != original_doc.validation_status and
+                not getattr(self.flags, 'updating_validation', False) and
+                not frappe.session.user == "Administrator"):
+
+                # Check if user has specific role permissions
+                if not (frappe.has_permission("Merit Score Submission", "write") and
+                       (frappe.get_roles() and any(role in ["Academics Manager", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                    frappe.throw(
+                        "Validation Status cannot be changed after submission. Only authorized users can update validation status.",
+                        frappe.ValidationError
+                    )
+
             # Prevent updates after validation unless allowed in settings
             if self.validation_status == "Validated":
                 from education_management.utils import get_education_management_settings
@@ -100,6 +114,7 @@ class MeritScoreSubmission(Document):
 
     def approve_validation(self, validator=None):
         """Method to approve merit score validation"""
+        self.flags.updating_validation = True
         self.validation_status = "Validated"
         self.validated_by = validator or frappe.session.user
         self.validation_date = now()
@@ -109,6 +124,7 @@ class MeritScoreSubmission(Document):
 
     def reject_validation(self, reason=None):
         """Method to reject merit score validation"""
+        self.flags.updating_validation = True
         self.validation_status = "Rejected"
         self.submission_status = "Rejected"
         if reason:
