@@ -30,6 +30,11 @@ frappe.ui.form.on('Merit Score Submission', {
         if (frm.doc.validation_status === 'Validated') {
             check_modification_permission(frm);
         }
+
+        // Make Document Verification Status read-only after submission for non-authorized users
+        if (frm.doc.docstatus === 1) {
+            frm.set_df_property('document_verification_status', 'read_only', 1);
+        }
     }
 });
 

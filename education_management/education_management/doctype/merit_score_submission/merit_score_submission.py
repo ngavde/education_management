@@ -12,25 +12,35 @@ class MeritScoreSubmission(Document):
 
     def check_validation_update_permission(self):
         """Prevent updates after validation unless allowed in settings"""
-        if self.validation_status == "Validated" and not self.is_new():
-            # Check if modification is allowed after validation
-            from education_management.utils import get_education_management_settings
-            settings = get_education_management_settings()
+        if not self.is_new():
+            # Get the original document to compare changes
+            original_doc = frappe.get_doc("Merit Score Submission", self.name)
 
-            if not settings.get("allow_score_modification_after_validation"):
-                # Allow only certain fields to be updated
-                allowed_fields = ['admin_remarks', 'teacher_comments', 'validation_status', 'validated_by', 'validation_date']
+            # Prevent Document Verification Status changes after submission
+            if (self.docstatus == 1 and
+                self.document_verification_status != original_doc.document_verification_status and
+                not frappe.has_permission("Merit Score Submission", "write")):
+                frappe.throw(
+                    "Document Verification Status cannot be changed after submission. Only authorized users can update verification status.",
+                    frappe.ValidationError
+                )
 
-                # Get the original document to compare changes
-                original_doc = frappe.get_doc("Merit Score Submission", self.name)
+            # Prevent updates after validation unless allowed in settings
+            if self.validation_status == "Validated":
+                from education_management.utils import get_education_management_settings
+                settings = get_education_management_settings()
 
-                for field in self.meta.get_fieldnames():
-                    if field not in allowed_fields and self.get(field) != original_doc.get(field):
-                        frappe.throw(
-                            f"Cannot modify '{self.meta.get_field(field).label}' after validation. "
-                            "Enable 'Allow Score Modification After Validation' in Education Management Settings to allow changes.",
-                            frappe.ValidationError
-                        )
+                if not settings.get("allow_score_modification_after_validation"):
+                    # Allow only certain fields to be updated
+                    allowed_fields = ['admin_remarks', 'teacher_comments', 'validation_status', 'validated_by', 'validation_date', 'document_verification_status']
+
+                    for field in self.meta.get_fieldnames():
+                        if field not in allowed_fields and self.get(field) != original_doc.get(field):
+                            frappe.throw(
+                                f"Cannot modify '{self.meta.get_field(field).label}' after validation. "
+                                "Enable 'Allow Score Modification After Validation' in Education Management Settings to allow changes.",
+                                frappe.ValidationError
+                            )
 
     def on_submit(self):
         self.submission_status = "Submitted"
