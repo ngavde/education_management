@@ -24,7 +24,7 @@ class MeritScoreSubmission(Document):
 
                 # Check if user has specific role permissions
                 if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics Manager", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
                     frappe.throw(
                         "Document Verification Status cannot be changed after submission. Only authorized users can update verification status.",
                         frappe.ValidationError
@@ -38,7 +38,7 @@ class MeritScoreSubmission(Document):
 
                 # Check if user has specific role permissions
                 if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics Manager", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
                     frappe.throw(
                         "Validation Status cannot be changed after submission. Only authorized users can update validation status.",
                         frappe.ValidationError
@@ -52,7 +52,7 @@ class MeritScoreSubmission(Document):
 
                 # Check if user has specific role permissions
                 if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics Manager", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
                     frappe.throw(
                         "Submission Status cannot be changed after submission. Only authorized users can update submission status through proper workflow.",
                         frappe.ValidationError
