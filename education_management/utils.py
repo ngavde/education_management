@@ -35,6 +35,7 @@ def check_merit_list_requirement(doc, method):
                 )
 
 
+@frappe.whitelist()
 def get_education_management_settings():
     """Get education management settings with defaults"""
     try:

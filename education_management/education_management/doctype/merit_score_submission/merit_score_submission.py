@@ -44,61 +44,75 @@ class MeritScoreSubmission(Document):
         self.calculate_grade()
 
     def check_validation_update_permission(self):
-        """Prevent updates after validation unless allowed in settings"""
+        """Allow all status field updates for users with proper permissions"""
         if not self.is_new():
             # Get the original document to compare changes
             original_doc = frappe.get_doc("Merit Score Submission", self.name)
 
-            # Prevent Document Verification Status changes after submission
-            if (self.docstatus == 1 and
-                self.document_verification_status != original_doc.document_verification_status and
-                not getattr(self.flags, 'updating_verification', False) and
-                not frappe.session.user == "Administrator"):
+            # Allow status changes for users with write permissions and proper roles
+            user_roles = frappe.get_roles()
+            has_proper_role = any(role in ["Academics User", "System Manager", "Administrator"] for role in user_roles)
+            has_write_permission = frappe.has_permission("Merit Score Submission", "write")
 
-                # Check if user has specific role permissions
-                if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+            # Only enforce restrictions if user doesn't have proper permissions
+            if not (has_write_permission and has_proper_role) and frappe.session.user != "Administrator":
+
+                # Prevent Document Verification Status changes after submission
+                if (self.docstatus == 1 and
+                    self.document_verification_status != original_doc.document_verification_status and
+                    not getattr(self.flags, 'updating_verification', False)):
                     frappe.throw(
                         "Document Verification Status cannot be changed after submission. Only authorized users can update verification status.",
                         frappe.ValidationError
                     )
 
-            # Prevent Validation Status changes after submission
-            if (self.docstatus == 1 and
-                self.validation_status != original_doc.validation_status and
-                not getattr(self.flags, 'updating_validation', False) and
-                not frappe.session.user == "Administrator"):
-
-                # Check if user has specific role permissions
-                if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                # Prevent Validation Status changes after submission
+                if (self.docstatus == 1 and
+                    self.validation_status != original_doc.validation_status and
+                    not getattr(self.flags, 'updating_validation', False)):
                     frappe.throw(
                         "Validation Status cannot be changed after submission. Only authorized users can update validation status.",
                         frappe.ValidationError
                     )
 
-            # Prevent Submission Status changes after submission
-            if (self.docstatus == 1 and
-                self.submission_status != original_doc.submission_status and
-                not getattr(self.flags, 'updating_validation', False) and
-                not frappe.session.user == "Administrator"):
-
-                # Check if user has specific role permissions
-                if not (frappe.has_permission("Merit Score Submission", "write") and
-                       (frappe.get_roles() and any(role in ["Academics User", "System Manager", "Administrator"] for role in frappe.get_roles()))):
+                # Prevent Submission Status changes after submission
+                if (self.docstatus == 1 and
+                    self.submission_status != original_doc.submission_status and
+                    not getattr(self.flags, 'updating_validation', False)):
                     frappe.throw(
                         "Submission Status cannot be changed after submission. Only authorized users can update submission status through proper workflow.",
                         frappe.ValidationError
                     )
 
-            # Prevent updates after validation unless allowed in settings
-            if self.validation_status == "Validated":
+                # Prevent Validated By changes after submission
+                if (self.docstatus == 1 and
+                    self.validated_by != original_doc.validated_by and
+                    not getattr(self.flags, 'updating_validation', False)):
+                    frappe.throw(
+                        "Validated By cannot be changed after submission. Only authorized users can update validation fields.",
+                        frappe.ValidationError
+                    )
+
+                # Prevent Validation Date changes after submission
+                if (self.docstatus == 1 and
+                    self.validation_date != original_doc.validation_date and
+                    not getattr(self.flags, 'updating_validation', False)):
+                    frappe.throw(
+                        "Validation Date cannot be changed after submission. Only authorized users can update validation fields.",
+                        frappe.ValidationError
+                    )
+
+            # Prevent updates after validation unless allowed in settings (only for non-authorized users)
+            if (self.validation_status == "Validated" and
+                not (has_write_permission and has_proper_role) and
+                frappe.session.user != "Administrator"):
+
                 from education_management.utils import get_education_management_settings
                 settings = get_education_management_settings()
 
                 if not settings.get("allow_score_modification_after_validation"):
                     # Allow only certain fields to be updated
-                    allowed_fields = ['admin_remarks', 'teacher_comments', 'validation_status', 'validated_by', 'validation_date', 'document_verification_status']
+                    allowed_fields = ['admin_remarks', 'teacher_comments', 'validation_status', 'validated_by', 'validation_date', 'document_verification_status', 'submission_status']
 
                     for field in self.meta.get_fieldnames():
                         if field not in allowed_fields and self.get(field) != original_doc.get(field):
@@ -177,6 +191,27 @@ class MeritScoreSubmission(Document):
         if reason:
             self.admin_remarks = reason
         self.save()
+
+    @frappe.whitelist()
+    def verify_documents(self):
+        """Method to verify supporting documents"""
+        self.flags.updating_verification = True
+        self.document_verification_status = "Verified"
+        self.save()
+        return "Documents verified successfully"
+
+    @frappe.whitelist()
+    def reject_documents(self, reason=None):
+        """Method to reject document verification"""
+        self.flags.updating_verification = True
+        self.document_verification_status = "Rejected"
+        if reason:
+            if self.admin_remarks:
+                self.admin_remarks += f"\n\nDocument Verification: {reason}"
+            else:
+                self.admin_remarks = f"Document Verification: {reason}"
+        self.save()
+        return "Documents rejected"
 
 
 @frappe.whitelist()
@@ -260,6 +295,21 @@ def update_document_verification(submission_name, status):
     doc = frappe.get_doc("Merit Score Submission", submission_name)
 
     frappe.msgprint(f"Document verification status updated to {status}")
+    return doc
+
+
+@frappe.whitelist()
+def verify_document_submission(submission_name, action, comments=None):
+    """Verify or reject document submission"""
+    doc = frappe.get_doc("Merit Score Submission", submission_name)
+
+    if action == "verify":
+        doc.verify_documents()
+        frappe.msgprint("Documents verified successfully")
+    elif action == "reject":
+        doc.reject_documents(comments)
+        frappe.msgprint("Documents rejected")
+
     return doc
 
 
