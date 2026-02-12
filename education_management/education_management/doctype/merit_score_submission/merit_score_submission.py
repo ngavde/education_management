@@ -4,6 +4,39 @@ from frappe.utils import flt, nowdate, now
 
 
 class MeritScoreSubmission(Document):
+    # begin: auto-generated types
+    # This code is auto-generated. Do not modify anything in this block.
+
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from education_management.education_management.doctype.merit_subject_score.merit_subject_score import MeritSubjectScore
+        from frappe.types import DF
+
+        academic_year: DF.Link | None
+        admin_remarks: DF.SmallText | None
+        amended_from: DF.Link | None
+        applicant_name: DF.Data | None
+        category_rank: DF.Int
+        document_verification_status: DF.Literal["Pending", "Verified", "Rejected"]
+        maximum_possible_score: DF.Float
+        merit_grade: DF.Literal["", "A+", "A", "B+", "B", "C+", "C", "D", "F"]
+        merit_rank: DF.Int
+        naming_series: DF.Literal["EDU-MRT-.YYYY.-"]
+        percentage_score: DF.Percent
+        program: DF.Link | None
+        student_applicant: DF.Link
+        student_category: DF.Link | None
+        subject_scores: DF.Table[MeritSubjectScore]
+        submission_date: DF.Date | None
+        submission_status: DF.Literal["Draft", "Submitted", "Under Review", "Approved", "Rejected"]
+        supporting_documents: DF.Attach | None
+        teacher_comments: DF.SmallText | None
+        total_merit_score: DF.Float
+        validated_by: DF.Link | None
+        validation_date: DF.Datetime | None
+        validation_status: DF.Literal["Pending", "Validated", "Rejected"]
+    # end: auto-generated types
     def validate(self):
         self.check_validation_update_permission()
         self.calculate_percentage()
